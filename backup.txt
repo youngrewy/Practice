@@ -1,0 +1,284 @@
+#include <iostream>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <initializer_list>
+using namespace std;
+
+class mystr
+{
+	size_t length;
+	char* pointer;
+public:
+	mystr()
+	{
+		length = 0;
+		pointer = 0;
+	}
+
+	mystr(const mystr& copy) {
+		length = copy.length;
+		pointer = new char[length];
+		for (int i = 0; i < length; ++i) {
+			pointer[i] = copy.pointer[i];
+		}
+	}
+
+	mystr(string str)
+	{
+		length = str.size();
+		pointer = new char[length];
+		for (int i = 0; i < length; i++)
+		{
+			pointer[i] = str[i];
+		}
+	}
+
+	mystr& operator=(const mystr& str1)
+	{
+		if (length != 0)
+		{
+			delete[] pointer;
+		}
+		this->length = str1.length;
+		this->pointer = new char[length];
+		for (int i = 0; i < length; i++)
+		{
+			pointer[i] = str1.pointer[i];
+		}
+		return *this;
+	}
+
+	bool operator== (const mystr& str1)
+	{
+		if (length != str1.length) return 0;
+		for (int i = 0; i < length; i++)
+		{
+			if (pointer[i] != str1.pointer[i]) return 0;
+		}
+		return 1;
+	}
+
+	mystr operator+(const mystr& str)
+	{
+		mystr result;
+		result.length = this->length + str.length;
+		result.pointer = new char[result.length];
+		for (int i = 0; i < this->length; i++)
+			result.pointer[i] = this->pointer[i];
+		for (int i = 0; i < str.length; i++)
+			result.pointer[i + this->length] = str.pointer[i];
+		return result;
+	}
+
+	void printmystr()
+	{
+		for (int i = 0; i < this->length; i++)
+		{
+			cout << this->pointer[i];
+		}
+		cout << endl;
+	}
+	~mystr()
+	{
+		delete[] pointer;
+	}
+};
+
+class massive
+{
+	mystr* mas;
+	size_t size;
+public:
+	massive()
+	{
+		size = 0;
+		mas = 0;
+	}
+
+	massive(size_t length)
+	{
+		size = length;
+		mas = new mystr[length];
+	}
+
+	massive(const massive& copy) {
+		size = copy.size;
+		mas = new mystr[size];
+		for (int i = 0; i < size; ++i) {
+			mas[i] = copy.mas[i];
+		}
+	}
+
+	massive(const std::initializer_list<mystr>& list) :
+		massive(list.size())
+	{
+		int i = 0;
+		for (const mystr& element : list)
+		{
+			mas[i] = element;
+			++i;
+		}
+	}
+
+	massive& operator=(const massive& mas1)
+	{
+		if (size != 0)
+		{
+			delete[] mas;
+		}
+		this->size = mas1.size;
+		this->mas = new mystr[size];
+		for (int i = 0; i < size; i++)
+		{
+			mas[i] = mas1.mas[i];
+		}
+		return *this;
+	}
+
+	mystr& operator[](int index)
+	{
+		if (!(index >= 0 && index < size)) exit(-1);
+		return mas[index];
+	}
+
+	void printmassive() const
+	{
+		for (int i = 0; i < size; i++)
+			mas[i].printmystr();
+	}
+
+	massive unite(const massive& mas2) const
+	{
+		massive result(max(size, mas2.size));
+		for (int i = 0; i < result.size; i++)
+		{
+			if ((mas2.size < size) && (i >= mas2.size))
+				result.mas[i] = mas[i];
+			else if ((size < mas2.size) && (i >= size))
+				result.mas[i] = mas2.mas[i];
+			else
+				result.mas[i] = mas[i] + mas2.mas[i];
+		}
+		return result;
+	}
+
+	massive merge(const massive& mas1)
+	{
+		massive result, temp;
+		bool flag;
+		temp.size = mas1.size + size;
+		temp.mas = new mystr[temp.size];
+		int* arr, i;
+		for (i = 0; i < mas1.size; i++)
+			temp.mas[i] = mas1.mas[i];
+		for (i = 0; i < size; i++)
+			temp.mas[i + mas1.size] = mas[i];
+		arr = new int[temp.size];
+		for (i = 0; i < temp.size; i++)
+			arr[i] = 0;
+		int count = 1;
+		arr[temp.size - 1] = 1;
+		for (int i = 0; i < temp.size - 1; i++)
+		{
+			flag = false;
+			for (int j = i + 1; j < temp.size; j++)
+			{
+				if (temp.mas[i] == temp.mas[j])
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (!(flag))
+			{
+				arr[i] = 1;
+				count++;
+			}
+		}
+		result.size = count;
+		result.mas = new mystr[result.size];
+		int j = 0;
+		for (int i = 0; i < temp.size; i++)
+		{
+			if (arr[i])
+			{
+				result.mas[j] = temp.mas[i];
+				j++;
+			}
+		}
+		delete[] arr;
+		delete[] temp.mas;
+		*this = result;
+		delete[] result.mas;
+		return *this;
+	}
+
+	size_t length()
+	{
+		return this->size;
+	}
+	~massive()
+	{
+		delete[] mas;
+	}
+};
+
+int main()
+{
+	mystr a("aaabbb"), b("zzzxxx"), c("hhhggg"), d("zzzxxx"), e("klklklk"), f("aaabbbn");
+	int menuPointer = -1, index, masindex1, masindex2, masindex3;
+	massive mas1({ a, b, c }), mas2({ a, b, e }), mas3;
+	massive mas[3];
+	mas[0] = mas1; mas[1] = mas2; mas[2] = mas3;
+
+	while (menuPointer != 5)
+	{
+		cout << "1. Print out string by index" << endl;
+		cout << "2. Print out massive" << endl;
+		cout << "3. Unite massives by strings" << endl;
+		cout << "4. Merge massives without repeating strings" << endl;
+		cout << "5. Exit" << endl;
+		cout << "> ";
+
+		cin >> menuPointer;
+
+		switch (menuPointer)
+		{
+		case 1:
+		{
+			cout << "Input index of massive" << endl;
+			cin >> masindex1;
+			cout << "Input index of string" << endl;
+			cin >> index;
+			mas[masindex1][index].printmystr();
+		}
+		break;
+		case 2:
+		{
+			cout << "Input index of massive" << endl;
+			cin >> masindex1;
+			mas[masindex1].printmassive();
+		}
+		break;
+		case 3:
+		{
+			cout << "Input indexes of massives you want to unite and where you want to put the result" << endl;
+			cin >> masindex1 >> masindex2 >> masindex3;
+			mas[masindex3] = mas[masindex1].unite(mas[masindex2]);
+		}
+		break;
+		case 4:
+		{
+			cout << "Input indexes of massives you want to merge" << endl;
+			cin >> masindex1 >> masindex2;
+			mas[masindex1].merge(mas[masindex2]);
+		}
+		break;
+		case 5:
+		{
+			return 0;
+		}
+		}
+	}
+}
